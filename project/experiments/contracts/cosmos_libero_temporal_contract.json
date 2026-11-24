@@ -1,0 +1,207 @@
+{
+  "contract_version": "2026-07-29.1",
+  "generated_at": "2026-07-29T15:20:33+08:00",
+  "status": "audited_stage1_gate_blocked",
+  "checkpoint": {
+    "hf_id": "nvidia/Cosmos-Policy-LIBERO-Predict2-2B",
+    "local_path": "${COSMOS_CHECKPOINT_ROOT}/Cosmos-Policy-LIBERO-Predict2-2B.pt",
+    "size_bytes": 3913017345,
+    "config_name": "cosmos_predict2_2b_480p_libero__inference_only",
+    "base_model": "nvidia/Cosmos-Predict2-2B-Video2World",
+    "latent_shape": [
+      "B",
+      16,
+      9,
+      28,
+      28
+    ],
+    "state_t": 9,
+    "tokenizer_chunk_duration": 33,
+    "duplicates_per_semantic_slot": 4,
+    "latent_slots": {
+      "0": "blank_tokenizer_input",
+      "1": "current_proprio",
+      "2": "current_wrist_image",
+      "3": "current_primary_image",
+      "4": "action_chunk",
+      "5": "future_proprio_t_plus_16",
+      "6": "future_wrist_image_t_plus_16",
+      "7": "future_primary_image_t_plus_16",
+      "8": "discounted_return_value_at_t_plus_16"
+    }
+  },
+  "native_conditioning": {
+    "temporal_observation_history_frames": 1,
+    "views": [
+      "primary",
+      "wrist"
+    ],
+    "proprio_dim": 9,
+    "reference_plus_memory_1_plus_4_supported": false,
+    "reason": "Slots 0-8 are semantic modality slots, not consecutive observation times. The released checkpoint conditions on one current observation."
+  },
+  "action_contract": {
+    "horizon_steps": 16,
+    "action_dim": 7,
+    "dataset_control_hz": 20,
+    "horizon_seconds": 0.8,
+    "source_indices_inclusive": [
+      "t",
+      "t+15"
+    ],
+    "target_observation_index": "t+16",
+    "last_action_repeat_padding_allowed_for_formal_runs": false,
+    "required_policy_horizon_for_aligned_runs": 16,
+    "formal_rlinf_defaults_aligned": true,
+    "formal_rlinf_padding_enabled": false,
+    "lerobot_gripper_values": [
+      0.0,
+      1.0
+    ],
+    "cosmos_gripper_values": [
+      -1.0,
+      1.0
+    ],
+    "gripper_mapping": "cosmos_gripper = 2 * lerobot_gripper - 1"
+  },
+  "native_outputs": {
+    "future_primary_frames": 1,
+    "future_wrist_frames": 1,
+    "future_proprio_states": 1,
+    "value_scalars": 1,
+    "future_index": "t+16",
+    "requested_future_clip_frames": 8,
+    "requested_future_clip_supported": false,
+    "warning": "The decoded 33-frame tokenizer sequence contains duplicated semantic modality images. It must not be interpreted as 33 temporal future frames."
+  },
+  "batch_inference_contract": {
+    "seed_scope": "one seed per diffusion batch",
+    "per_sample_seed_supported": false,
+    "reproducibility_requirements": [
+      "fixed batch_seed",
+      "fixed sample ordering",
+      "fixed batch shape"
+    ],
+    "required_workspace_extension": "third_party/cosmos-policy/cosmos_policy/experiments/robot/cosmos_utils.py::get_action_batch"
+  },
+  "value_contract": {
+    "training_target": "Monte Carlo discounted sparse terminal success return evaluated at future_frame_idx=t+16",
+    "gamma_per_low_level_step": 0.99,
+    "internal_training_range": [
+      -1.0,
+      1.0
+    ],
+    "public_inference_range": [
+      0.0,
+      1.0
+    ],
+    "failure_episode_target_after_public_unscale": 0.0,
+    "semantic_class": "discounted_future_state_return_estimator",
+    "not_a_reward": true,
+    "not_pure_v_or_q_by_default": true,
+    "parallel_mode_conditioning": "current observation; action, future state, and value are jointly generated",
+    "autoregressive_value_mode_conditioning": "current observation + supplied action chunk + generated future state",
+    "recommended_grpo_use_after_calibration": "terminal bootstrap with stop-gradient",
+    "bridge_value_route": "fixed_in_current_workspace: predict_future and predict_future_batch invoke official get_value_prediction after future-state generation",
+    "bridge_value_route_test": "third_party/WorldPilot/cosmos_bridge/test_cosmos_value_route.py"
+  },
+  "lerobot_dataset": {
+    "control_hz": 20,
+    "frame_period_seconds": 0.05,
+    "features": {
+      "state_dim": 8,
+      "action_dim": 7,
+      "primary_resolution": [
+        256,
+        256,
+        3
+      ],
+      "wrist_resolution": [
+        256,
+        256,
+        3
+      ]
+    },
+    "suites": {
+      "libero_spatial": {
+        "path": "${LIBERO_DATA_ROOT}/libero_spatial_no_noops_1.0.0_lerobot",
+        "episodes": 432,
+        "frames": 52970,
+        "complete": true
+      },
+      "libero_object": {
+        "path": "${LIBERO_DATA_ROOT}/libero_object_no_noops_1.0.0_lerobot",
+        "episodes": 454,
+        "frames": 66984,
+        "complete": true
+      },
+      "libero_goal": {
+        "path": "${LIBERO_DATA_ROOT}/libero_goal_no_noops_1.0.0_lerobot",
+        "episodes": 428,
+        "frames": 52042,
+        "complete": true
+      },
+      "libero_10": {
+        "path": "${LIBERO_DATA_ROOT}/libero_10_no_noops_1.0.0_lerobot",
+        "episodes": 379,
+        "frames": 101469,
+        "complete": true
+      }
+    },
+    "total_episodes": 1693,
+    "total_frames": 273465,
+    "incomplete_spatial_copy": {
+      "path": "${LIBERO_DATA_ROOT}/incomplete/libero_spatial_no_noops_1.0.0_lerobot",
+      "parquet_files": 13,
+      "has_meta": false,
+      "has_videos": false,
+      "must_not_be_used": true
+    }
+  },
+  "desired_wovr_window": {
+    "decision_index": "t",
+    "minimum_t": 4,
+    "maximum_t_for_unpadded_cosmos_target": "T-17",
+    "reference_index": "t-4",
+    "memory_indices": [
+      "t-3",
+      "t-2",
+      "t-1",
+      "t"
+    ],
+    "current_observation_index": "t",
+    "action_indices": [
+      "t",
+      "t+15"
+    ],
+    "native_cosmos_target_index": "t+16",
+    "history_span_seconds": 0.2,
+    "no_future_leakage": true
+  },
+  "m0_results": {
+    "C001": "done",
+    "C002": "done_with_spatial_path_correction",
+    "C003": "done",
+    "stage1_native_1_plus_4_to_8_gate": "blocked",
+    "blocking_reasons": [
+      "The released Cosmos Policy LIBERO checkpoint has one current observation as input, not 1+4 temporal observations.",
+      "The released checkpoint predicts one endpoint observation at t+16, not an 8-frame future clip.",
+      "Eight repeated endpoint calls would span eight 16-step chunks and are not equivalent to WoVR's native 8-frame future."
+    ]
+  },
+  "allowed_next_routes": {
+    "formal_recommended": "Fine-tune a Cosmos temporal action-conditioned adapter/checkpoint with a true 1+4 input and 8-future-frame target before WoVR reward training.",
+    "smaller_method_change": "Use Cosmos as a single t+16 endpoint simulator and retrain or recalibrate a reward model for endpoint inputs; do not claim WoVR 1+4-to-8 reproduction.",
+    "diagnostic_only": "Autoregress eight 16-step Cosmos transitions to inspect closed-loop drift; do not use this as the formal 8-frame contract."
+  },
+  "evidence_sources": [
+    "third_party/cosmos-policy/cosmos_policy/config/experiment/cosmos_policy_experiment_configs.py",
+    "third_party/cosmos-policy/cosmos_policy/datasets/libero_dataset.py",
+    "third_party/cosmos-policy/cosmos_policy/datasets/dataset_common.py",
+    "third_party/cosmos-policy/cosmos_policy/models/policy_video2world_model.py",
+    "third_party/cosmos-policy/cosmos_policy/experiments/robot/cosmos_utils.py",
+    "third_party/WorldPilot/cosmos_bridge/cosmos_server.py",
+    "third_party/RLinf/rlinf/envs/world_model/cosmos_world_env.py",
+    "nvidia/Cosmos-Policy-LIBERO-Predict2-2B model card"
+  ]
+}

@@ -1,0 +1,104 @@
+# WorldSample Route-A Low-Real-Budget Controlled Experiment (LIBERO-Spatial, 8 GPUs)
+#
+# Strict 1-to-1 matched comparison between:
+#   - Baseline (Pure Real PPO):  algorithm.hybrid_ppo_grpo.rho_max=0.0
+#   - Ours (Real PPO + WM GRPO): algorithm.hybrid_ppo_grpo.rho_max=0.30 (default below)
+#
+# Exact matched budget (starting from Step 0 = pi05/global_step_12000, action_chunk=8):
+#   - Real stream: 32 envs * 1 epoch = 32 real episodes/step (960 chunks = 120/rank).
+#     With real_micro_batch_size=30 and real_global_batch_size=240 -> 4 optimizer steps/step.
+#   - 16 outer steps total = 512 total real episodes (1/20th of 10,240-ep PPO; equal to 1 step of 512-ep PPO).
+#   - Eval checkpoints at steps 4, 8, 12, 16 -> 128, 256, 384, 512 real episodes (500-trial LIBERO-Spatial).
+#   - critic_warmup_steps=8 -> first 2 outer steps (64 real episodes) warm up ValueHead (Wan+Cosmos skipped).
+#   - WM stream (Ours): 128 envs * 4 epochs = 512 WM episodes/step (64 GRPO groups of 8, 15360 chunks).
+#     With actor.micro_batch_size=32, actor.global_batch_size=3840 -> exact 4 paired optimizer steps/step!
+runner:
+  max_epochs: 16
+  max_steps: 16
+  val_check_interval: 4
+  save_interval: 4
+  resume_dir: null
+  ckpt_path: null
+
+algorithm:
+  kl_penalty: low_var_kl
+  kl_beta: 0.01
+  hybrid_ppo_grpo:
+    enabled: true
+    rho_max: 0.30
+    rho_min: 0.0
+    # Use linear_ramp for flow_sde (where Gaussian sigma is fixed, so entropy is constant).
+    pacing_mode: linear_ramp
+    entropy_kappa: 0.5
+    entropy_power: 1.0
+    entropy_ref: 0.0
+    ramp_steps: 4
+    real_clip_ratio_low: 0.2
+    real_clip_ratio_high: 0.2
+    real_value_clip: 0.2
+    real_huber_delta: 10.0
+    real_value_loss_coef: 1.0
+    real_kl_beta: 0.01
+    wm_kl_beta: 0.01
+    real_micro_batch_size: 30
+    real_global_batch_size: 240
+    paired_steps_per_epoch: null
+    real_update_epochs: 1
+    min_wm_signal_groups: 1
+    skip_wm_during_critic_warmup: true
+    # Norm-match WM actor grads to real PPO norm and drop conflicting (cos < 0) WM steps.
+    grad_norm_match: true
+    grad_conflict_mode: cosine_gate
+    grad_cos_min: 0.0
+
+env:
+  train:
+    rollout_epoch: 4
+    total_num_envs: 128
+  real_train:
+    env_type: libero
+    task_suite_name: libero_spatial
+    total_num_envs: 32
+    rollout_epoch: 1
+    group_size: 1
+    auto_reset: false
+    ignore_terminations: false
+    max_episode_steps: 240
+    max_steps_per_rollout_epoch: 240
+    use_rel_reward: true
+    use_step_penalty: false
+    reward_coef: 1.0
+    reset_gripper_open: true
+    is_eval: false
+    seed: 42
+    use_fixed_reset_state_ids: true
+    use_ordered_reset_state_ids: false
+    specific_reset_id: null
+    openpi_gripper_action_mode: libero_01_to_signed
+    init_params:
+      camera_heights: 256
+      camera_widths: 256
+    video_cfg:
+      save_video: false
+
+actor:
+  micro_batch_size: 32
+  global_batch_size: 3840
+  model:
+    add_value_head: true
+    openpi:
+      add_value_head: true
+      value_after_vlm: true
+      detach_critic_input: true
+  optim:
+    lr: 5.0e-06
+    value_lr: 1.0e-04
+    critic_warmup_steps: 8
+
+rollout:
+  model:
+    add_value_head: true
+    openpi:
+      add_value_head: true
+      value_after_vlm: true
+      detach_critic_input: true

@@ -1,0 +1,132 @@
+# RLinf Spatial GRPO with the LIBERO-10 micro batch and gradient accumulation,
+# local native 12k loading, and a retained actor CUDA allocator cache.
+# Source: /data41/qianb2608/wan/RLinf_opd/examples/embodiment/config/libero_spatial_grpo_openpi_pi05.yaml
+defaults:
+- env/libero_spatial@env.train
+- env/libero_spatial@env.eval
+- model/pi0_5@actor.model
+- hybrid_engines/fsdp@actor.fsdp_config
+- weight_syncer/patch_syncer@weight_syncer
+- override hydra/job_logging: stdout
+hydra:
+  run:
+    dir: .
+  output_subdir: null
+  searchpath:
+  - file://${oc.env:RLINF_ROOT}/examples/embodiment/config/
+cluster:
+  num_nodes: 1
+  component_placement:
+    actor,env,rollout: 0-7
+runner:
+  task_type: embodied
+  logger:
+    log_path: ${oc.env:SPATIAL_GRPO_OUTPUT}
+    project_name: rlinf
+    experiment_name: spatial_pi05_12000_grpo_8gpu
+    logger_backends:
+    - tensorboard
+  max_epochs: 1000
+  max_steps: -1
+  only_eval: false
+  val_check_interval: -1
+  save_interval: 40
+  resume_dir: null
+  ckpt_path: null
+algorithm:
+  normalize_advantages: true
+  kl_penalty: kl
+  group_size: 8
+  reward_coef: 1.0
+  reward_type: chunk_level
+  logprob_type: chunk_level
+  entropy_type: token_level
+  update_epoch: 1
+  adv_type: grpo
+  loss_type: actor
+  loss_agg_func: token-mean
+  kl_beta: 0.0
+  entropy_bonus: 0
+  clip_ratio_high: 0.2
+  clip_ratio_low: 0.2
+  clip_ratio_c: 3.0
+  value_clip: 0.2
+  huber_delta: 10.0
+  gamma: 0.99
+  gae_lambda: 0.95
+  filter_rewards: true
+  rewards_lower_bound: 0.1
+  rewards_upper_bound: 0.9
+env:
+  group_name: EnvGroup
+  train:
+    rollout_epoch: 8
+    total_num_envs: 64
+    group_size: ${algorithm.group_size}
+    max_episode_steps: 240
+    max_steps_per_rollout_epoch: 240
+    action_adapter: pi05_openpi
+  eval:
+    rollout_epoch: 1
+    total_num_envs: 500
+    auto_reset: true
+    ignore_terminations: true
+    max_episode_steps: 240
+    max_steps_per_rollout_epoch: 240
+    group_size: 1
+    is_eval: true
+    video_cfg:
+      save_video: true
+      video_base_dir: ${runner.logger.log_path}/video/eval
+    action_adapter: pi05_openpi
+rollout:
+  group_name: RolloutGroup
+  generation_backend: huggingface
+  recompute_logprobs: false
+  unnorm_key: libero_10
+  enable_offload: false
+  pipeline_stage_num: 1
+  model:
+    model_path: ${oc.env:PI05_CHECKPOINT_ROOT}
+    precision: ${actor.model.precision}
+    openpi_data:
+      norm_stats_path: ${oc.env:PI05_CHECKPOINT_ROOT}/physical-intelligence/libero/norm_stats.json
+actor:
+  group_name: ActorGroup
+  training_backend: fsdp
+  micro_batch_size: 32
+  global_batch_size: 2048
+  memory_pool:
+    enabled: true
+    target_fraction: 0.80
+    device_headroom_gib: 6.0
+  seed: 42
+  enable_offload: false
+  model:
+    model_path: ${oc.env:PI05_CHECKPOINT_ROOT}
+    num_action_chunks: 5
+    num_steps: 3
+    openpi_data:
+      norm_stats_path: ${oc.env:PI05_CHECKPOINT_ROOT}/physical-intelligence/libero/norm_stats.json
+    openpi:
+      checkpoint_format: native
+  optim:
+    lr: 5.0e-06
+    value_lr: 0.0001
+    adam_beta1: 0.9
+    adam_beta2: 0.95
+    adam_eps: 1.0e-08
+    weight_decay: 0.01
+    clip_grad: 1.0
+  fsdp_config:
+    strategy: fsdp
+    sharding_strategy: no_shard
+    gradient_checkpointing: false
+    mixed_precision:
+      param_dtype: ${actor.model.precision}
+      reduce_dtype: ${actor.model.precision}
+      buffer_dtype: ${actor.model.precision}
+reward:
+  use_reward_model: false
+critic:
+  use_critic_model: false

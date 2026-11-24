@@ -1,0 +1,39 @@
+# Keep the exact task039 world-model runtime used by the 20-step run.
+env.train.wan_wm_hf_ckpt_path=${oc.env:HYBRID_WAN_CKPT,${oc.env:PROJECT_ROOT,.}/checkpoints/wovr/RLinf-Wan-LIBERO-Goal}
+env.train.VAE_path=${oc.env:HYBRID_WAN_CKPT,${oc.env:PROJECT_ROOT,.}/checkpoints/wovr/RLinf-Wan-LIBERO-Goal}/Wan2.2_VAE.pth
+env.train.model_path=${oc.env:HYBRID_WAN_CKPT,${oc.env:PROJECT_ROOT,.}/checkpoints/wovr/RLinf-Wan-LIBERO-Goal}/model-00001.safetensors
+env.train.initial_image_path=${oc.env:HYBRID_WAN_CKPT,${oc.env:PROJECT_ROOT,.}/checkpoints/wovr/RLinf-Wan-LIBERO-Goal}/dataset/
+env.train.reward_model.from_pretrained=${oc.env:WOVR_REWARD_MODEL_CHECKPOINT,${oc.env:PROJECT_ROOT,.}/checkpoints/wovr/RLinf-Wan-LIBERO-Goal/taskemb_resnet_rm_retrained_20epoch.pth}
+wovr_goal_reward_checkpoint=${oc.env:WOVR_GOAL_REWARD_CHECKPOINT,${oc.env:PROJECT_ROOT,.}/checkpoints/wovr/RLinf-Wan-LIBERO-Goal/taskemb_resnet_rm_retrained.pth}
+
+# Preserve the original GRPO environment/action contract.
+env.train.num_inference_steps=5
+env.train.cosmos_future_denoising_steps=5
+env.train.cosmos_wrist_primary_reference=true
+env.train.cosmos_wrist_input_camera_space=rlinf_runtime_rot180
+env.train.cosmos_gripper_action_mode=already_cosmos
+env.train.video_show_shadow_wrist=false
+++env.train.cosmos_wrist_cross_view_primary_history=false
+++env.train.openpi_gripper_action_mode=already_signed
++env.train.task_id_filter=[0,3,9]
+env.train.use_policy_state=false
+env.train.enable_kir=false
+env.train.use_libero_state_bridge=true
+
+# This checkpoint already emits signed gripper actions; do not apply the
+# default libero_01_to_signed output transform in either model path.
+++actor.model.openpi_data.output_gripper_action_mode=already_signed
+++rollout.model.openpi_data.output_gripper_action_mode=already_signed
+
+# Keep the resolved actor setting from the 20-step run.
+actor.model.num_steps=5
+
+# Keep the same task subset/action contract on the eval-side config too.
+++env.eval.video_show_shadow_wrist=false
+++env.eval.cosmos_wrist_primary_reference=true
+++env.eval.cosmos_wrist_cross_view_primary_history=false
+++env.eval.cosmos_wrist_input_camera_space=rlinf_runtime_rot180
+++env.eval.openpi_gripper_action_mode=already_signed
++env.eval.task_id_filter=[0,3,9]
++env.eval.use_policy_state=false
++env.eval.use_libero_state_bridge=true

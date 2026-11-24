@@ -1,0 +1,134 @@
+{
+  "contract_version": "2026-07-30.1",
+  "generated_at": "2026-07-30T22:40:00+08:00",
+  "status": "active_13_frame_temporal_adapter",
+  "route": {
+    "id": 1,
+    "name": "cosmos_13_frame_temporal_action_adapter",
+    "selected": true,
+    "training_type": "offline_real_future_video_diffusion",
+    "closed_loop_policy_training": false
+  },
+  "initialization": {
+    "source_checkpoint": "nvidia/Cosmos-Policy-LIBERO-Predict2-2B",
+    "local_path": "${COSMOS_CHECKPOINT_ROOT}/Cosmos-Policy-LIBERO-Predict2-2B.pt",
+    "training_mode": "lora_plus_two_action_mlps",
+    "verified_frozen_base_tensors": 574,
+    "lora_rank": 32,
+    "lora_alpha": 32,
+    "lora_targets": "q_proj,k_proj,v_proj,output_proj,mlp.layer1,mlp.layer2",
+    "lora_trainable_parameters": 45875200,
+    "action_mlp_trainable_parameters": 68050944,
+    "total_trainable_parameters": 113926144,
+    "backbone_frozen": true,
+    "conditioner_frozen": true,
+    "distributed_parallelism": "single_gpu_ddp_gloo",
+    "cudnn_enabled": false
+  },
+  "time_contract": {
+    "control_hz": 20,
+    "decision_index": "t",
+    "valid_t_min": 6,
+    "valid_t_max": "T-17",
+    "reference_primary_index": "episode frame 0",
+    "memory_primary_indices": ["t-6", "t-4", "t-2", "t"],
+    "action_indices_inclusive": ["t", "t+15"],
+    "action_horizon_steps": 16,
+    "action_horizon_seconds": 0.8,
+    "future_primary_indices": [
+      "t+2",
+      "t+4",
+      "t+6",
+      "t+8",
+      "t+10",
+      "t+12",
+      "t+14",
+      "t+16"
+    ],
+    "future_primary_fps": 10,
+    "action_padding_allowed": false,
+    "future_target_padding_allowed": false,
+    "cross_episode_windows_allowed": false
+  },
+  "latent_contract": {
+    "state_t": 4,
+    "tokenizer_chunk_duration": 13,
+    "temporal_compression_factor": 4,
+    "num_conditional_latent_frames": 2,
+    "num_generated_latent_frames": 2,
+    "actions_per_generated_latent": 8,
+    "slots": {
+      "0": "fixed_reference_primary_episode_frame_0",
+      "1": "memory_primary_t_minus_6_t_minus_4_t_minus_2_t",
+      "2": "future_primary_t_plus_2_through_t_plus_8_conditioned_on_actions_t_through_t_plus_7",
+      "3": "future_primary_t_plus_10_through_t_plus_16_conditioned_on_actions_t_plus_8_through_t_plus_15"
+    },
+    "conditional_latent_indices": [0, 1],
+    "generated_latent_indices": [2, 3],
+    "condition_action_embeddings_are_zero": true
+  },
+  "data_contract": {
+    "root": "${COSMOS_LIBERO_DATA_ROOT}",
+    "trajectory_dir": "${COSMOS_LIBERO_DATA_ROOT}/all_episodes",
+    "statistics_dir": "${COSMOS_LIBERO_DATA_ROOT}/success_only",
+    "trajectory_files": 2000,
+    "manifest_path": "${PROJECT_ROOT}/artifacts/libero_cosmos_policy_all_episodes_manifest.json",
+    "manifest_file_sha256": "4ba3d0312b183f43b98640f29c33ba74bb9fffbacc978afc480ea4993d344e5b",
+    "manifest_schema": "2026-07-29.2",
+    "split_unit": "episode",
+    "trajectory_identity": "sha256(dtype+shape+bytes for actions and proprio)",
+    "split_hash": "sha256('20260729|'+trajectory_sha256) mod 100",
+    "splits": {
+      "train": [0, 89],
+      "calibration": [90, 94],
+      "holdout": [95, 99]
+    },
+    "train_window_counts": {
+      "success": 216468,
+      "failure": 49924,
+      "unbalanced_total": 266392,
+      "balanced_logical_epoch": 432936
+    },
+    "outcome_sampling": {
+      "success_probability": 0.5,
+      "failure_probability": 0.5,
+      "failure_modulo_repetition_per_logical_epoch": 4.336
+    },
+    "suites": [
+      "libero_spatial",
+      "libero_object",
+      "libero_goal",
+      "libero_10"
+    ],
+    "targets_must_be_real_observations": true,
+    "generated_future_as_target_allowed": false
+  },
+  "loss_contract": {
+    "type": "edm_weighted_latent_mse",
+    "loss_reduce": "mean_over_batch_channels_all_four_latent_slots_and_space",
+    "loss_scale": 10.0,
+    "conditional_slot_loss_is_zero_by_frame_replacement": true,
+    "generated_slot_only_equivalent_scale": 5.0,
+    "note": "The inherited mean includes two zero-loss condition latents. This is intentional for the active run and must not be changed without a new experiment."
+  },
+  "output_contract": {
+    "future_primary": ["B", 8, "H", "W", 3],
+    "future_wrist": null,
+    "future_proprio": null,
+    "value": null,
+    "task_success": null
+  },
+  "evaluation_contract": {
+    "schema_version": "2026-07-30.1",
+    "forecast_metrics_type": "real_gt",
+    "same_seed_action_intervention_type": "self_supervised_proxy",
+    "closed_loop_libero_required_for_task_success_claim": true,
+    "checkpoint_identity_required": true
+  },
+  "resume_contract": {
+    "strict_same_job_tensor_restore": true,
+    "complete_checkpoint_manifest_required_for_exact_resume": true,
+    "rng_sampler_and_dataloader_progress_required_for_exact_resume": true,
+    "legacy_checkpoint_without_progress_is_exact_resume": false
+  }
+}

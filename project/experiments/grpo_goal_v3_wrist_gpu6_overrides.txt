@@ -1,0 +1,11 @@
+# Fresh GRPO from the initial Pi05-SFT policy; do not resume an old GRPO run.
+env.train.use_policy_state=false
+env.train.video_show_shadow_wrist=false
+env.train.cosmos_wrist_primary_reference=true
+env.train.cosmos_wrist_input_camera_space=rlinf_runtime_rot180
++env.eval.use_libero_state_bridge=true
++env.eval.use_policy_state=false
++env.eval.video_show_shadow_wrist=false
++env.eval.cosmos_wrist_primary_reference=true
++env.eval.cosmos_wrist_cross_view_primary_history=false
++env.eval.cosmos_wrist_input_camera_space=rlinf_runtime_rot180

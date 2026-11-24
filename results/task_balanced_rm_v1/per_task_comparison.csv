@@ -1,0 +1,11 @@
+task_id,model_task_id,task_description,baseline_all_recall,baseline_all_fpr,baseline_all_bal_acc,ours_09_all_recall,ours_09_all_fpr,ours_09_all_bal_acc,ours_cal_all_recall,ours_cal_all_fpr,ours_cal_all_bal_acc,calibrated_task_threshold
+0,0,pick up the black bowl between the plate and the ramekin and place it on the plate,0.9111,0.4,0.7556,0.8222,0.0,0.9111,0.7778,0.0,0.8889,0.82
+1,5,pick up the black bowl next to the ramekin and place it on the plate,0.9556,0.0,0.9778,0.8889,0.0,0.9444,0.8667,0.0,0.9333,0.9
+2,1,pick up the black bowl from table center and place it on the plate,0.9565,0.25,0.8533,0.9783,0.25,0.8641,0.9348,0.25,0.8424,0.94
+3,6,pick up the black bowl on the cookie box and place it on the plate,0.9111,0.0,0.9556,0.9556,0.0,0.9778,0.9556,0.0,0.9778,0.91
+4,2,pick up the black bowl in the top drawer of the wooden cabinet and place it on the plate,0.7895,0.0,0.8947,0.9211,0.0,0.9605,0.8947,0.0,0.9474,0.85
+5,7,pick up the black bowl on the ramekin and place it on the plate,0.9737,0.3333,0.8202,0.7632,0.0,0.8816,0.7368,0.0,0.8684,0.84
+6,3,pick up the black bowl next to the cookie box and place it on the plate,0.9574,0.3333,0.8121,1.0,0.3333,0.8333,1.0,0.3333,0.8333,0.91
+7,8,pick up the black bowl on the stove and place it on the plate,0.9444,0.2143,0.8651,0.9167,0.2143,0.8512,0.9167,0.2143,0.8512,0.88
+8,4,pick up the black bowl next to the plate and place it on the plate,0.8261,0.25,0.788,0.8696,0.5,0.6848,0.8261,0.0,0.913,0.91
+9,9,pick up the black bowl on the wooden cabinet and place it on the plate,0.9545,0.0,0.9773,1.0,0.0,1.0,1.0,0.0,1.0,0.91

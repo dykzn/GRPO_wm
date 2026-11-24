@@ -1,0 +1,21 @@
+actor:
+  micro_batch_size: 32
+  global_batch_size: 8192
+  shared_wan_pool:
+    # Per-process PyTorch allocator caps on the 80 GiB Spatial training cards.
+    peer_allocator_gib:
+      cosmos: 11.0
+      rollout: 13.0
+      env: 2.0
+    driver_growth_gib: 2.5
+  optim:
+    lr: 5.0e-6
+    use_config_lr_on_resume: true
+algorithm:
+  kl_penalty: low_var_kl
+  kl_beta: 0.01
+env:
+  train:
+    # 128 envs x 8 rollout epochs x 32 chunks = 4 global batches.
+    # Per-task deadlines mask the padded tail of each trajectory.
+    max_steps_per_rollout_epoch: 256

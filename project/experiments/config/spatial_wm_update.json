@@ -1,0 +1,11 @@
+{
+  "static_video_probability": 0.05,
+  "weight_decay": 0.01,
+  "sampling": {
+    "samples": 40000,
+    "seed": 20261021,
+    "new_fraction": 0.5,
+    "keyframe_probability": 0.25,
+    "reset_probability": 0.05
+  }
+}
